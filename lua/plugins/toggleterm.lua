@@ -1,43 +1,72 @@
 return {
   "akinsho/toggleterm.nvim",
-  version = "*", -- 使用稳定版本
+  version = "*",
   config = function()
     local toggleterm = require("toggleterm")
 
-    -- 1. 基础设置
+    -- 1. 基础设置：禁用 open_mapping（我们自己控制）
     toggleterm.setup({
-      size = 20, -- 终端窗口的大小 (行数或列数)
-      open_mapping = [[<c-`>]], -- 全局快捷键：Ctrl + `
-      hide_numbers = true, -- 隐藏终端缓冲区的行号
-      shade_filetypes = {}, -- 不遮挡文件类型颜色
-      shade_terminals = true, -- 给终端背景加一点阴影
-      shading_factor = 2, -- 阴影深浅
-      start_in_insert = true, -- 打开终端时自动进入插入模式
-      insert_mappings = true, -- 在插入模式下也能使用映射
-      persist_size = true, -- 记住窗口大小
-      direction = "float", -- 默认布局：float(浮动) | horizontal(水平) | vertical(垂直) | tab
-      close_on_exit = true, -- 终端进程退出时自动关闭窗口
-      auto_scroll = true, -- 自动滚动到底部
+      size = 20,
+      open_mapping = nil, -- 👈 关键：设为 nil，不再自动绑定
+      hide_numbers = true,
+      shade_filetypes = {},
+      shade_terminals = true,
+      shading_factor = 2,
+      start_in_insert = true,
+      insert_mappings = true,
+      persist_size = true,
+      direction = "float", -- 默认方向（但会被实例覆盖）
+      close_on_exit = true,
+      auto_scroll = true,
       float_opts = {
-        border = "curved", -- 浮动窗口边框样式: single, double, rounded, solid, shadow, curved
-        winblend = 0, -- 透明度 (0-100)
+        border = "curved",
+        winblend = 0,
       },
     })
 
-    -- 2. 设置终端模式下的快捷键
-    -- 作用域设置为 't' 表示仅在终端模式下生效
+    -- 2. 创建两个独立终端实例
+
+    -- 浮动终端
+    local Terminal = require("toggleterm.terminal").Terminal
+    local float_terminal = Terminal:new({
+      direction = "float",
+      close_on_exit = true,
+      on_open = function()
+        vim.cmd("startinsert!")
+      end,
+    })
+
+    -- 右侧终端
+    local right_terminal = Terminal:new({
+      direction = "vertical",
+      close_on_exit = true,
+      on_open = function()
+        vim.cmd("startinsert!")
+      end,
+    })
+
+    -- 3. 绑定快捷键
+
+    -- <C-`> → 切换浮动终端
+    vim.keymap.set("n", "<C-`>", function()
+      float_terminal:toggle()
+    end, { desc = "Toggle Float Terminal" })
+
+    -- <leader>tt → 切换右侧终端
+    vim.keymap.set("n", "<leader>tt", function()
+      right_terminal:toggle()
+    end, { desc = "Toggle Right Terminal" })
+
+    -- 4. 终端模式快捷键
     function _G.set_terminal_keymaps()
-      local opts = { buffer = 0 } -- buffer=0 表示当前缓冲区
-      -- 按 Esc 退出终端模式回到普通模式
+      local opts = { buffer = 0 }
       vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], opts)
-      -- 按 Ctrl+h/j/k/l 切换窗口焦点
       vim.keymap.set("t", "<C-h>", [[<Cmd>wincmd h<CR>]], opts)
       vim.keymap.set("t", "<C-j>", [[<Cmd>wincmd j<CR>]], opts)
       vim.keymap.set("t", "<C-k>", [[<Cmd>wincmd k<CR>]], opts)
       vim.keymap.set("t", "<C-l>", [[<Cmd>wincmd l<CR>]], opts)
     end
 
-    -- 当打开终端时自动应用上面的快捷键
     vim.cmd("autocmd! TermOpen term://* lua set_terminal_keymaps()")
   end,
 }

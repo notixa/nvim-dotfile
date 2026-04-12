@@ -23,7 +23,7 @@ return {
       -- 如果找不到，可以尝试 /usr/bin/lldb-server 或自行编译 llvm 获取
       dap.adapters.lldb = {
         type = 'executable',
-        command = '/usr/bin/lldb-vscode', 
+        command = '/usr/bin/lldb-server',
         name = "lldb",
       }
 
