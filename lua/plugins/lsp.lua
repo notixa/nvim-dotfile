@@ -50,7 +50,7 @@ return {
             clangd = {
               InlayHints = {
                 Enabled = true,
-                DeducedTypes = true,     -- auto 后显示推导类型
+                DeducedTypes = true, -- auto 后显示推导类型
                 ParameterNames = true,
                 Designators = true,
               },
@@ -82,6 +82,7 @@ return {
       vim.keymap.set("n", "gd", vim.lsp.buf.definition, { desc = "Goto Definition" })
       vim.keymap.set("n", "gr", vim.lsp.buf.references, { desc = "References" })
       vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "Hover" })
+      vim.keymap.set("n", "gl", vim.diagnostic.open_float, { desc = "Show diagnostic float" })
     end,
   },
 
@@ -119,8 +120,8 @@ return {
           draw = {
             treesitter = { "lsp" },
             columns = {
-              { "kind_icon", "kind", gap = 1 },
-              { "label", "label_description" },
+              { "kind_icon", "kind",             gap = 1 },
+              { "label",     "label_description" },
             },
           },
         },
@@ -135,6 +136,12 @@ return {
     },
   },
 
-  { "williamboman/mason.nvim", cmd = "Mason", config = function() require("mason").setup() end },
+  {
+    "williamboman/mason.nvim",
+    cmd = "Mason",
+    config = function()
+      require("mason").setup()
+    end
+  },
   { "williamboman/mason-lspconfig.nvim", config = function() require("mason-lspconfig").setup() end },
 }
