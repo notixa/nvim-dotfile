@@ -32,7 +32,7 @@ return {
         end
 
         if server == "clangd" then
-          -- 关键：开启 auto 推导类型提示
+          -- clangd 配置
           opts.cmd = {
             "clangd",
             "--background-index",
@@ -41,15 +41,17 @@ return {
             "--header-insertion=iwyu",
           }
 
-          -- clangd inlay hints 设置（不同版本 clangd 对字段兼容度略有差异）
+          -- clangd inlay hints 设置
+          -- 注意：这里保持 Enabled = true，因为我们需要 LSP 提供数据
+          -- 但通过客户端控制是否显示
           opts.init_options = {
-            clangdFileStatus = true,
+            clangdFileStatus = false,
           }
 
           opts.settings = {
             clangd = {
               InlayHints = {
-                Enabled = true,
+                Enabled = true,      -- LSP 仍然生成 inlay hint 数据
                 DeducedTypes = true, -- auto 后显示推导类型
                 ParameterNames = true,
                 Designators = true,
@@ -68,17 +70,27 @@ return {
         end
       end
 
-      -- 3) LspAttach: 启用 inlay hints
+      -- 3) LspAttach: 默认禁用 inlay hints，但保留数据
       vim.api.nvim_create_autocmd("LspAttach", {
         callback = function(args)
           local client = vim.lsp.get_client_by_id(args.data.client_id)
           if client and client.server_capabilities.inlayHintProvider then
-            vim.lsp.inlay_hint.enable(true, { bufnr = args.buf })
+            -- 默认禁用 inlay hints 显示
+            vim.lsp.inlay_hint.enable(false, { bufnr = args.buf })
           end
         end,
       })
 
-      -- 4) keymaps
+      -- 4) 快捷键：切换 inlay hints
+      vim.keymap.set("n", "<leader>ih", function()
+        local buf = vim.api.nvim_get_current_buf()
+        local enabled = vim.lsp.inlay_hint.is_enabled({ buf = buf })
+        vim.lsp.inlay_hint.enable(not enabled, { buf = buf })
+        vim.notify("Inlay Hints: " .. (not enabled and "Enabled" or "Disabled"),
+          not enabled and vim.log.levels.INFO or vim.log.levels.WARN)
+      end, { desc = "Toggle Inlay Hints" })
+
+      -- 5) 其他 LSP 快捷键
       vim.keymap.set("n", "gd", vim.lsp.buf.definition, { desc = "Goto Definition" })
       vim.keymap.set("n", "gr", vim.lsp.buf.references, { desc = "References" })
       vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "Hover" })
